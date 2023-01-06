@@ -33,7 +33,7 @@ services:
     volumes:
       - static:/static
     ports:
-      - "81:81"
+      - "81:80"
     networks:
       - my_network
   #NEXTJS CLIENT
@@ -44,18 +44,28 @@ services:
 
     networks:
       - my_network
-  nginx:
-    build: ./nginx
-    volumes:
-      - static:/static
+  frontend:
+    restart: unless-stopped
+    image: staticfloat/nginx-certbot
     ports:
-      - "80:80"
-    # depends_on:
-    #   - djangogunicorn
+      - 80:80/tcp
+      - 443:443/tcp
+    environment:
+      CERTBOT_EMAIL: canelosspa56@gmail.com
+    volumes:
+       - static:/static
+       - media:/app/media
+       - ./conf.d:/etc/nginx/user.conf.d:ro
+       - letsencrypt:/etc/letsencrypt      
+    #depends_on:
+      #- djangogunicorn
     networks:
       - my_network
 volumes:
   static:
+  media:
+  letsencrypt:
+
 networks:
   my_network:
     driver: bridge
