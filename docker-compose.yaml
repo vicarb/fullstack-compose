@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  #POSTGRES DB
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db_v3
+      - POSTGRES_USER=user1
+      - POSTGRES_PASSWORD=user1
+    networks:
+      - my_network
+  #DJANGO API
+  djangogunicorn:
+    volumes:
+      - static:/static
+
+    env_file: 
+      - .env
+    build:
+      context: .
+    ports: 
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - my_network
+  #PROXY FOR API docker internal network
+  localnginx:
+    build: ./nginxlocal
+    volumes:
+      - static:/static
+    ports:
+      - "81:81"
+    networks:
+      - my_network
+  #NEXTJS CLIENT
+  client:
+    build: ./client
+    ports:
+      - 3000:3000
+
+    networks:
+      - my_network
+  nginx:
+    build: ./nginx
+    volumes:
+      - static:/static
+    ports:
+      - "80:80"
+    # depends_on:
+    #   - djangogunicorn
+    networks:
+      - my_network
+volumes:
+  static:
+networks:
+  my_network:
+    driver: bridge
